@@ -25,7 +25,7 @@
     werckmeister3: { title: "Werckmeister III", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 32 },
     valloti: { title: "Valloti", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 39 },
     pythagoras: { title: "Pythagoras", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 496 },
-    bachSeal: { title: "Bach / Seal", note: '2019年版の掲載図に合わせ、純正五度7個と、ピタゴラス・コンマの1/5ずつ狭めた五度5個（約697.263 cent）を厳密値で置きます。C・Gの長三度は掲載図の388.8に対し389.1です（掲載図の24値は一周に閉じません）。', page: 1783 },
+    bachSeal: { title: "Bach / Seal", note: '2019年版の掲載図に合わせ、純正五度7個と、ピタゴラス・コンマの1/5ずつ狭めた五度5個（約697.263 cent）を厳密値で置きます。C・Gの長三度は掲載図の388.8に対し389.1です。', page: 1783 },
     bachSeal15: { title: "Bach’s Seal 1.5", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 2153 },
     schnitger: { title: "Schnitger", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 2295 },
     bachSeal10: { title: "Bach’s Seal 1.0", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 2306 },
