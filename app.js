@@ -118,8 +118,6 @@
     }
     svg.append(node('circle', { cx: center, cy: center, r: R, fill: 'none', stroke: '#778975', 'stroke-width': 1 }));
     svg.append(node('circle', { cx: center, cy: center, r: 53, fill: '#f7b779', stroke: '#7a6450', 'stroke-width': 1 }));
-    svg.append(node('text', { x: center, y: center - 9, 'text-anchor': 'middle', 'font-size': 17, fill: '#624322', 'font-weight': 600 }, 'C = 0'));
-    svg.append(node('text', { x: center, y: center + 14, 'text-anchor': 'middle', 'font-size': 11, fill: '#7b5832' }, 'cent'));
     document.getElementById('figure').replaceChildren(svg);
     // Narrow fifths with decimals would cross the sector sides: shrink those labels to fit, keeping
     // their baselines (r = 70, 81). Fit uses the painted glyph extents, not the taller em box.
