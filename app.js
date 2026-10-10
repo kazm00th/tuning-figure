@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const { NAMES, SHORT, PURE_THIRD, PRESETS, PRESET_RATIOS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel } = Tuning;
+  const { NAMES, SHORT, PURE_THIRD, PRESETS, PRESET_RATIOS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel, matchPreset } = Tuning;
   const { thirdColor, fifthColor, textColor } = TuningPalette;
   const { parseRatio, ratioCents, formatRatio, sameRatio, centsToRatio, reduceOctave, checkOctave, MAX_LENGTH } = Ratio;
   const NS = 'http://www.w3.org/2000/svg';
@@ -44,6 +44,8 @@
   // 'cents' or 'ratio'; lastPitches are the cents last drawn (used for the SVG metadata).
   let mode = 'cents', lastField = null, lastPitches = equal.slice();
   const PRESET_PARSED = Object.fromEntries(Object.entries(PRESET_RATIOS).map(([key, texts]) => [key, texts.map(parseRatio)]));
+  const PRESET_CENTS = Object.fromEntries(Object.entries(PRESET_PARSED).map(([key, ratios]) => [key, ratios.map(ratioCents)]));
+  const PRESET_TOLERANCE = 1e-6;
   const HELP = {
     cents: 'Cからの音程をcentで入力。小数に対応し、入力のたびに描画します。',
     ratio: 'Cからの周波数比を式で入力（1以上2未満）。例：3/2、5^(1/4)、2^(13/6)/3、√5/2、√[4]5、10^(7/8)/5。小数は使えません。'
@@ -170,10 +172,16 @@
     if (first) throw first;
     return pitches;
   }
+  // Exact match first; otherwise a preset within PRESET_TOLERANCE cent on every note, so values rounded by
+  // switching (cent → 2^(c/1200) keeps 8-10 decimals) still count as their preset.
   function findPreset(pitches) {
-    if (mode === 'cents') return Object.keys(PRESETS).find(key => pitches.every((v, i) => v === PRESETS[key][i]));
+    if (mode === 'cents') {
+      return Object.keys(PRESETS).find(key => pitches.every((v, i) => v === PRESETS[key][i]))
+        || matchPreset(pitches, PRESETS, PRESET_TOLERANCE) || matchPreset(pitches, PRESET_CENTS, PRESET_TOLERANCE);
+    }
     const parsed = fields.map(f => parseRatio(f.value));
-    return Object.keys(PRESET_PARSED).find(key => PRESET_PARSED[key].every((r, i) => sameRatio(r, parsed[i])));
+    return Object.keys(PRESET_PARSED).find(key => PRESET_PARSED[key].every((r, i) => sameRatio(r, parsed[i])))
+      || matchPreset(pitches, PRESET_CENTS, PRESET_TOLERANCE);
   }
   function update() {
     for (const field of fields) field.removeAttribute('aria-invalid');

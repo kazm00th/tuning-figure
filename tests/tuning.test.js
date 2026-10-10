@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildModel, ellipseGeometry, parseCents, labelFitScale, rootLabel, thirdLabel, PRESETS } = require('../tuning.js');
+const { buildModel, ellipseGeometry, parseCents, labelFitScale, rootLabel, thirdLabel, matchPreset, PRESETS } = require('../tuning.js');
 const equal = Array.from({ length: 12 }, (_, i) => i * 100);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 
@@ -120,4 +120,13 @@ test('third names are keyboard names in lower case, A♯/B♭ in two lines', () 
     assert.deepEqual(thirdLabel(pc), { lines, accidental: [1, 3, 6, 8, 10].includes(pc) });
   });
   assert.deepEqual(thirdLabel(-4), thirdLabel(8)); assert.deepEqual(thirdLabel(16), thirdLabel(4));
+});
+
+// A field converted back and forth is rounded by ~1e-10 cent; it should still count as its preset.
+test('matchPreset accepts a preset whose every note is within the tolerance', () => {
+  const presets = { a: [0, 100.5, 700], b: [0, 200, 700] };
+  assert.equal(matchPreset([0, 100.5000000004, 700], presets, 1e-6), 'a');
+  assert.equal(matchPreset([0, 200, 699.9999999], presets, 1e-6), 'b');
+  assert.equal(matchPreset([0, 100.500002, 700], presets, 1e-6), undefined);
+  assert.equal(matchPreset([0, 100.5, 701], presets, 1e-6), undefined);
 });

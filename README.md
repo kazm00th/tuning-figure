@@ -89,7 +89,7 @@ node --test --test-isolation=none tests/*.test.js
 
 空白・全角の数字と記号・`·`・`×`・`÷`・`−` も使えます。小数・省略した掛け算（`2√5`）・べきの連続（`2^3^2`）・0・負の数は使えません。式は 200 文字、入れ子は 50 段、整数は 10^12 までです。範囲の外の比はエラーになり、「オクターブを合わせる」で 2 のべきを掛けて直せます。
 
-切り替えると各欄を変換します（cent → `2^(c/1200)`、比 → cent）。周波数比のモードでプリセットを選ぶと、その音律の定義から作った厳密な比が入ります。16個（平均律、Kirnberger I・III、Jobin、Meantone、Base of Bach、VeryWell 2.0、Praetorius、Kellner、Bach / Seal、Werckmeister III、Valloti、Young II、Pythagoras、Lehman、Schnitger）は純正五度とコンマ（シントニック・ピタゴラス・スキスマ）の分数で定義され、掲載図の丸めた値とは各音で最大 0.63 cent 違います（Meantone の G♯ = 25/16 など）。VeryWell 2.0 は 702 を純正五度、700 を平均律の五度と読みます。Bach's Seal 1.5・1.0、Meantone / forPiano698、Bach WTC forPiano、VeryWell 1.0・3.0 は作者が cent で定めた調律法なので `2^(c/1200)` です。
+切り替えると各欄を変換します（cent → `2^(c/1200)`、比 → cent）。cent から比へは、指数の分子・分母が 10^12 に収まるいちばん長い桁数に四捨五入します。そのため往復すると値が 10^-8 cent ほど動くことがありますが、すべての音がプリセットから 10^-6 cent 以内なら、そのプリセットとして題名を出します。周波数比のモードでプリセットを選ぶと、その音律の定義から作った厳密な比が入ります。16個（平均律、Kirnberger I・III、Jobin、Meantone、Base of Bach、VeryWell 2.0、Praetorius、Kellner、Bach / Seal、Werckmeister III、Valloti、Young II、Pythagoras、Lehman、Schnitger）は純正五度とコンマ（シントニック・ピタゴラス・スキスマ）の分数で定義され、掲載図の丸めた値とは各音で最大 0.63 cent 違います（Meantone の G♯ = 25/16 など）。VeryWell 2.0 は 702 を純正五度、700 を平均律の五度と読みます。Bach's Seal 1.5・1.0、Meantone / forPiano698、Bach WTC forPiano、VeryWell 1.0・3.0 は作者が cent で定めた調律法なので `2^(c/1200)` です。
 
 ## 色と楕円の更新
 

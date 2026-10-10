@@ -113,7 +113,10 @@
     return { lines: table[i], accidental: BLACK_KEYS.includes(i) };
   };
   const rootLabel = figureLabel(ROOT_LABELS), thirdLabel = figureLabel(THIRD_LABELS);
-  const api = { NAMES, SHORT, ORDER, PRESETS, PRESET_RATIOS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale, rootLabel, thirdLabel };
+  // The preset (key of `presets`, each twelve cents) whose every note is within `tolerance` cent of `pitches`.
+  const matchPreset = (pitches, presets, tolerance) =>
+    Object.keys(presets).find(key => presets[key].every((v, i) => Math.abs(v - pitches[i]) <= tolerance));
+  const api = { NAMES, SHORT, ORDER, PRESETS, PRESET_RATIOS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale, rootLabel, thirdLabel, matchPreset };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else host.Tuning = api;
 })(globalThis);
