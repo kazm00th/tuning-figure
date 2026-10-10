@@ -43,6 +43,10 @@
   const downloadPng = document.getElementById('download-png');
   const pngScale = document.getElementById('png-scale');
   const fields = [], deltas = [], notes = [];
+  // Sectors and ellipses on screen → what a click on them sounds. Kept out of the SVG so saved files are unchanged.
+  const soundTargets = new WeakMap();
+  // 'dyad' (ellipse: root + third, sector: root + fifth) or 'triad' (both: root, third, fifth).
+  let soundMode = 'dyad', audio = null, player = null;
   // 'cents' or 'ratio'; lastPitches are the cents last drawn (used for the SVG metadata).
   let mode = 'cents', lastField = null, lastPitches = equal.slice();
   const PRESET_PARSED = Object.fromEntries(Object.entries(PRESET_RATIOS).map(([key, texts]) => [key, texts.map(parseRatio)]));
@@ -92,7 +96,9 @@
     // Line greys, widths and the 5-unit dash period were measured from the source figures (pages 32, 496, 691, 2295).
     for (const s of model.sectors) {
       const p = xy(R, s.start), q = xy(R, s.end);
-      svg.append(node('path', { d: `M ${center} ${center} L ${p.join(' ')} A ${R} ${R} 0 0 0 ${q.join(' ')} Z`, fill: fifthColor(s.fifth), stroke: '#808080', 'stroke-width': 1 }));
+      const sector = node('path', { d: `M ${center} ${center} L ${p.join(' ')} A ${R} ${R} 0 0 0 ${q.join(' ')} Z`, fill: fifthColor(s.fifth), stroke: '#808080', 'stroke-width': 1 });
+      soundTargets.set(sector, { pitches: model.pitches, sector: s, target: 'sector' });
+      svg.append(sector);
     }
     // 1-cent rings in the third colours up to 428 cent; 400 and 408 (Pythagorean) are emphasised.
     // Range, widths and opacities were matched to radial profiles of the source figures (pages 215, 691, 2284).
@@ -112,6 +118,7 @@
       const p = xy(g.center, mid);
       const ellipse = node('ellipse', { cx: p[0], cy: p[1], rx: g.radial, ry: g.tangential, transform: `rotate(${mid} ${p[0]} ${p[1]})`, fill: thirdColor(s.third), stroke: '#353535', 'stroke-opacity': .85, 'stroke-width': .9 });
       ellipse.append(node('title', {}, `${SHORT[s.root]}–${SHORT[s.middle]}–${SHORT[s.top]}：長三度 ${fmt(s.third, 3)} cent、五度 ${fmt(s.fifth, 3)} cent`));
+      soundTargets.set(ellipse, { pitches: model.pitches, sector: s, target: 'ellipse' });
       svg.append(ellipse);
       // The source rotates each two-line label with its sector. Third labels start a fixed
       // distance from the ellipse's inner end (baselines 24.5 and 38.5 beyond it), whatever its size.
@@ -256,6 +263,25 @@
     document.getElementById('value-heading').textContent = mode === 'cents' ? 'Cから / cent' : 'Cからの比';
     update();
   }
+  function setSoundMode(next) {
+    soundMode = next;
+    document.getElementById('sound-dyad').setAttribute('aria-checked', String(next === 'dyad'));
+    document.getElementById('sound-triad').setAttribute('aria-checked', String(next === 'triad'));
+  }
+  document.getElementById('sound-dyad').addEventListener('click', () => setSoundMode('dyad'));
+  document.getElementById('sound-triad').addEventListener('click', () => setSoundMode('triad'));
+  // The audio context starts on the first click (browsers allow sound only after a user gesture).
+  document.getElementById('figure').addEventListener('click', event => {
+    const hit = soundTargets.get(event.target);
+    if (!hit) return;
+    if (!audio) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) { status.textContent = 'このブラウザでは音を出せません。'; status.className = 'status error'; return; }
+      audio = new AudioContextClass(); player = Sound.createPlayer(audio);
+    }
+    if (audio.state === 'suspended') audio.resume();
+    player.play(Sound.noteFrequencies(hit.pitches, hit.sector, hit.target, soundMode));
+  });
   document.getElementById('mode-cents').addEventListener('click', () => setMode('cents'));
   document.getElementById('mode-ratio').addEventListener('click', () => setMode('ratio'));
   document.getElementById('insert-root').addEventListener('click', () => {
