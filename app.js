@@ -14,7 +14,7 @@
   const { equal } = PRESETS;
   const presetInfo = {
     equal: { title: '平均律', note: '平均律は半音ごとに100 centです。' },
-    kirnberger: { title: 'Kirnberger I · 整数centの例', note: '参照図の整数centに合わせた値です。', page: 215 },
+    kirnberger: { title: 'Kirnberger I', note: '参照図の整数centに合わせた値です。', page: 215 },
     jobin: { title: 'Bach WTC / Emile Jobin (2005)', note: '696.5／702 centを基準に、広い五度3個を約703.166667 centにして一周を閉じています。掲載値703.1とは丸めの違いがあります。', page: 1545 },
     meantone: { title: 'Meantone', note: '12音の例。五度696.5 centを11個、G♯–E♭のウルフ738.5 centを1個配置します。二重黒鍵の図は対象外です。', page: 691 },
     baseOfBach: { title: 'Base of Bach WTC', note: '五度696.5 centを5個、702 centを6個、G♯–E♭の705.5 centを1個配置した例です。', page: 2680 },
