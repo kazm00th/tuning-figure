@@ -1,8 +1,13 @@
-# 鍵盤楽器の為の十二音相環図
+# 「鍵盤楽器の為の十二音相環図」作図ツール
 
 公開ツール：https://kazm00th.github.io/tuning-figure/
 
 独自コードは[MIT License](LICENSE)。参照元と生成図に関する適用範囲は[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)を参照してください。
+
+岡本芳雄「鍵盤楽器の為の十二音相環図」に基づいて音律を図示するツールです。
+
+- https://pianotuning.jp/?page_id=236 （作図の方法）
+- https://pianotuning.jp/?page_id=215 （Kirnberger I）
 
 `index.html` をブラウザーで開くと動きます。インストール、ビルド、通信、ローカルサーバーは不要です。
 
@@ -36,11 +41,6 @@
 - tests/png.test.js: PNGのメタデータの書き込みの検証（CRCと期待値はNode.jsのzlibで独立に計算）
 
 ## 作図の定義
-
-参照: 岡本芳雄「鍵盤楽器の為の十二音相環図」
-
-- https://pianotuning.jp/?page_id=236 （作図の方法）
-- https://pianotuning.jp/?page_id=215 （Kirnberger I）
 
 参照図の画像は同梱せず、各入力値から新規のSVG図形を生成します。長三度はCIE LCh（D50）、完全五度はCIE Lab（D50）の近似式で、どちらも掲載主図25枚（24ページ）の楕円・扇形の色をセント値ごとに平均した値に当てはめています（色見本ページ1027・3956は参考）。元画像ごとの色差があるため完全な複製ではありません。
 
