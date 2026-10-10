@@ -67,16 +67,17 @@
   }
   const thirdColor = value => hex(labToRgb(thirdLab(value)));
   // Fifth colours (v2), CIE Lab D50: black up to 680, a grey ramp to white at 702 (inverse power; the
-  // figures have no data between 680 and 696), then a discontinuous pink with quadratic L*/C* and constant hue.
+  // figures have no data between 680 and 696), then pink with constant hue: L* is quadratic and steps down at
+  // 702, while C* = a·d^e + q·d² rises steeply from 0 (the source reaches C* 3.9 by 702.1 and 9.9 by 705.5).
   const FIFTH_GREY=1.1251404620039, FIFTH_L=[96.64117060136272,-1.2320812972133477,-0.00578128025561412];
-  const FIFTH_C=[5.818261166099397,0.4956988742233433,0.006655015773331193], FIFTH_H=348.6281776102556*Math.PI/180;
+  const FIFTH_C={a:6.4727165280199115,e:0.21520165883125056,q:0.014288076551702963}, FIFTH_H=348.6281776102556*Math.PI/180;
   function fifthLab(value) {
     if (!Number.isFinite(value)) throw new Error('色の計算には有限のcent値が必要です。');
     if (value<=680) return [0,0,0];
     if (value<=702) return [100*(1-((702-value)/22)**FIFTH_GREY),0,0];
     // Extrapolation beyond the measured range is unverified: retain its endpoint.
     const d=Math.min(value,738.5)-702;
-    const L=FIFTH_L[0]+FIFTH_L[1]*d+FIFTH_L[2]*d*d, C=FIFTH_C[0]+FIFTH_C[1]*d+FIFTH_C[2]*d*d;
+    const L=FIFTH_L[0]+FIFTH_L[1]*d+FIFTH_L[2]*d*d, C=FIFTH_C.a*d**FIFTH_C.e+FIFTH_C.q*d*d;
     return [L,C*Math.cos(FIFTH_H),C*Math.sin(FIFTH_H)];
   }
   const multiply=(m,v)=>m.map(row=>row.reduce((sum,x,i)=>sum+x*v[i],0));

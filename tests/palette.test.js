@@ -31,18 +31,22 @@ test('third LCh boundaries are continuous and wide thirds have monotonic L/C/h',
   assert.throws(()=>thirdColor(NaN));assert.throws(()=>thirdColor(Infinity));
 });
 test('fifth colors agree with independent Python Lab-to-sRGB palette conversion', () => {
-  // Expected values from the independent Python implementation of the v2 fifth formulas.
-  for(const [cent,want] of [[680,'#000000'],[690,'#767676'],[696.5,'#c4c4c4'],[700,'#ececec'],[702,'#ffffff'],[702.1,'#fff1f7'],[703,'#fdeef4'],[705.5,'#f6e4ec'],[716.5,'#d8b7c5'],[727.5,'#b8869d'],[738.5,'#965274']]) assert.equal(fifthColor(cent),want);
+  // Expected values from the independent Python implementation of the fifth formulas (pink C* = a·d^e + q·d²).
+  for(const [cent,want] of [[680,'#000000'],[690,'#767676'],[696.5,'#c4c4c4'],[700,'#ececec'],[702,'#ffffff'],[702.1,'#fcf3f7'],[703,'#fdeef5'],[705.5,'#f8e3ec'],[716.5,'#d8b7c6'],[727.5,'#b7869d'],[738.5,'#965274']]) assert.equal(fifthColor(cent),want);
   assert.deepEqual(labToRgb([100,0,0]),[255,255,255]);
 });
-test('gray fifths are neutral and pink jumps immediately above 702',()=>{
+test('gray fifths are neutral and pink chroma rises steeply from zero above 702',()=>{
   for (const c of [678,680,681,696,700,701.999,702]) {
     const [r,g,b]=labToRgb(fifthLab(c));assert.equal(r,g);assert.equal(g,b);
   }
-  const [L,a,b]=fifthLab(702+1e-7);
-  // The source already shows pink at 702.1 cent (L* 97.7, C* 3.9); v2 starts at L* 96.6, C* 5.8.
-  assert.ok(L<97 && Math.hypot(a,b)>5);
+  // L* still steps down at 702, but C* starts from 0 and reaches the source's 3.9 by 702.1 cent.
+  const chroma=c=>Math.hypot(...fifthLab(c).slice(1));
+  const [L]=fifthLab(702+1e-7);
+  assert.ok(L<97 && chroma(702+1e-7)<.5);
+  assert.ok(Math.abs(chroma(702.1)-3.9)<.1);
   assert.notEqual(fifthColor(702+1e-7),fifthColor(702));
+  let prev=0;
+  for(let i=1;i<=3650;i++) { const C=chroma(702+i/100); assert.ok(C>prev); prev=C; }
 });
 test('palette clamps beyond fit bounds and rejects non-finite fifths', () => {
   assert.equal(thirdColor(450),thirdColor(428));
