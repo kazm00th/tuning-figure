@@ -3,13 +3,19 @@ const assert = require('node:assert/strict');
 const {thirdColor,thirdLch,fifthColor,fifthLab,labToRgb,textColor} = require('../palette.js');
 // Expected colours from an independent Python implementation of the v2 formulas (fit to the main figures).
 test('third colors agree with independent Python LCh palette including gamut clipping', () => {
-  for(const [cent,want] of [[384,'#dacd46'],[386,'#fef454'],[392,'#bdd65c'],[397,'#6fbd66'],[400,'#13ae68'],[402,'#04a375'],[405,'#018c80'],[408,'#00757f'],[412,'#005c71'],[428,'#024b65']]) assert.equal(thirdColor(cent),want);
+  for(const [cent,want] of [[384,'#dacd46'],[386,'#fef454'],[392,'#bdd65c'],[397,'#6fbd65'],[397.5,'#65bb67'],[400,'#13ae68'],[402,'#04a375'],[405,'#018c80'],[408,'#00757f'],[412,'#005c71'],[428,'#024b65']]) assert.equal(thirdColor(cent),want);
 });
 test('third L*/C* peak at the measured maximum, held from 386 cent to the pure third',()=>{
   for(const c of [386,1200*Math.log2(5/4)]) {
     const [L,C]=thirdLch(c);
     assert.ok(Math.abs(L-94.908)<1e-9);assert.ok(Math.abs(C-75.018)<1e-9);
   }
+});
+test('third C* dip near 397 cent stays at or above the lowest measured mean there (52.7246 at 397.0)',()=>{
+  // The valley floor may sit between data points, but must not undercut the data.
+  let min=Infinity;
+  for(let i=0;i<=55000;i++) min=Math.min(min,thirdLch(394+i/10000)[1]);
+  assert.ok(min>=52.7246-1e-6);assert.ok(min<52.7246+1e-3);
 });
 test('third LCh boundaries are continuous and wide thirds have monotonic L/C/h',()=>{
   for(const b of [386,1200*Math.log2(5/4),1200*Math.log2(81/64),400]) {
