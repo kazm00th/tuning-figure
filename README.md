@@ -8,7 +8,7 @@
 
 - Cは0 cent固定。残りの11音はCからの音程を入力します（平均律なら100, 200, …, 1100）。
 - 入力のたびにSVGを更新します。小数に対応します。
-- プリセットは平均律、Kirnberger I、Bach WTC / Jobin、Meantone、Base of Bach WTC、VeryWell 2.0、Praetorius、Bach / Kellnerに加え、参照ページから追加した10例の計18種類。選択すると全音の値と図が即座に切り替わります。選択後の手動編集も可能です。
+- プリセットは平均律、Kirnberger I、Bach WTC / Jobin、Meantone、Base of Bach WTC、VeryWell 2.0、Praetorius、Bach / Kellnerに加え、参照ページから追加した14例の計22種類。選択すると全音の値と図が即座に切り替わります。選択後の手動編集も可能です。
 - 「SVGを保存」で図を保存できます。
 - 再読み込みすると平均律に戻ります。入力値の自動保存機能はありません。
 - 数値はCから昇順、1200 cent未満で入力します。空欄や作図範囲外の間は直前の図を残し、理由を表示します。その間はSVG保存を無効にします。
@@ -123,6 +123,10 @@ b*=-0.840578 - 0.157662*d + 0.000665994*d²
 - Bach’s Seal 1.0: https://pianotuning.jp/?page_id=2306 （五度・長三度24値と照合済み）
 - Meantone / forPiano698: https://pianotuning.jp/?page_id=3448 （五度・長三度24値と照合済み）
 - Bach WTC forPiano: https://pianotuning.jp/?page_id=4026 （五度・長三度24値と照合済み）
+- Young II: https://pianotuning.jp/?page_id=36 （五度・長三度24値と照合済み）
+- VeryWell 1.0: https://pianotuning.jp/?page_id=45 （五度・長三度24値と照合済み）
+- VeryWell 3.0: https://pianotuning.jp/?page_id=598 （五度・長三度24値と照合済み）
+- Bach / Lehman: https://pianotuning.jp/?page_id=1545 （同ページのJobinの下にある図。五度・長三度24値と照合済み）
 
-計18プリセット。指定20ページのうち3462・3717は不整合のため保留として画面に明記。3717は現在の採取表から復元した五度と掲載長三度に最大2.5 centの差があり、読み取りまたは元図の原因が未確認。Jobinは既存の閉環補正を維持。
+計22プリセット。指定20ページのうち3462・3717は不整合のため保留として画面に明記。3717は現在の採取表から復元した五度と掲載長三度に最大2.5 centの差があり、読み取りまたは元図の原因が未確認。掲載図を読み直すと、五度は697が4個（C–G・G–D・D–A・B–F♯）と701.5が8個で一周に閉じますが、長三度の掲載値はF♯・C♯・A♭が404（五度からは406）、F・Cが395（同392.5）などと食い違い、図の中で整合しません。Jobinは既存の閉環補正を維持。
 

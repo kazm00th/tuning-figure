@@ -27,7 +27,11 @@
     schnitger: { title: "Schnitger", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 2295 },
     bachSeal10: { title: "Bach’s Seal 1.0", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 2306 },
     meantonePiano: { title: "Meantone / forPiano698", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 3448 },
-    bachPiano: { title: "Bach WTC forPiano", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 4026 }
+    bachPiano: { title: "Bach WTC forPiano", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。', page: 4026 },
+    young2: { title: "Young II", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。五度698 centが6個、702 centが6個。', page: 36 },
+    verywell1: { title: "VeryWell 1.0", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。五度699・700・701 centが各4個。', page: 45 },
+    verywell3: { title: "VeryWell 3.0", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。五度697・700・703 centが各4個。', page: 598 },
+    lehman: { title: "Bach / Lehman", note: '掲載主図の五度・長三度24値と照合した丸めcent値です。五度698 centが5個、700と702 centが各3個、B♭–Fが704 cent。', page: 1545 }
   };
   const inputArea = document.getElementById('note-inputs');
   const status = document.getElementById('status');
