@@ -3,6 +3,10 @@
   const NAMES = ['C', 'C♯ / D♭', 'D', 'D♯ / E♭', 'E', 'F', 'F♯ / G♭', 'G', 'G♯ / A♭', 'A', 'A♯ / B♭', 'B'];
   const SHORT = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
   const ORDER = [2, 9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7];
+  // Pitches from eleven successive fifths starting on C (C G D A E B F♯ C♯ G♯ D♯ A♯ F).
+  const fromFifths = fifths => { const p = Array(12).fill(0); let c = 0; fifths.forEach((f, i) => { c += f; p[(i + 1) * 7 % 12] = c % 1200; }); return p; };
+  // Bach/Seal (2019 figure): exact pure fifths, five of them narrowed by 1/5 Pythagorean comma.
+  const PURE_FIFTH = 1200 * Math.log2(3 / 2), SEAL_NARROW = PURE_FIFTH - (12 * PURE_FIFTH - 8400) / 5;
   const PRESETS = {
     equal: Array.from({ length: 12 }, (_, i) => i * 100),
     kirnberger: [0, 90, 204, 294, 386, 498, 590, 702, 792, 884, 996, 1088],
@@ -17,7 +21,7 @@
     werckmeister3: [0,90,192,294,390,498,588,696,792,888,996,1092],
     valloti: [0,94,196,298,392,502,592,698,796,894,1000,1090],
     pythagoras: [0,114,204,294,408,498,612,702,816,906,996,1110],
-    bachSeal: [0,90,194.4,294,388.8,498,588,697.2,792,891.6,996,1086],
+    bachSeal: fromFifths([...Array(5).fill(SEAL_NARROW), ...Array(6).fill(PURE_FIFTH)]),
     bachSeal15: [0,92.5,195.8,295.5,391.6,498.5,591,697.9,794,893.7,997,1089.5],
     schnitger: [0,81,193,299.5,386,503.5,579,696.5,783,889.5,1001.5,1082.5],
     bachSeal10: [0,95,197.2,297,394.4,499,594,698.6,796,895.8,998,1093],

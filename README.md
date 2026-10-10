@@ -106,7 +106,10 @@ b*=-0.840578 - 0.157662*d + 0.000665994*d²
 - Werckmeister III: https://pianotuning.jp/?page_id=32 （五度・長三度24値と照合済み）
 - Valloti: https://pianotuning.jp/?page_id=39 （五度・長三度24値と照合済み）
 - Pythagoras: https://pianotuning.jp/?page_id=496 （五度・長三度24値と照合済み）
-- Bach / Seal: https://pianotuning.jp/?page_id=1783 （五度・長三度24値と照合済み）
+- Bach / Seal: https://pianotuning.jp/?page_id=1783 （2019年版の掲載図 56.BachsSealドイツ語2019-05-06-2.jpg と照合。24値のうち22値が一致）
+  - 純正五度 1200 log2(3/2) を7個、それをピタゴラス・コンマの1/5ずつ狭めた五度（約697.263 cent）をC–G・G–D・D–A・A–E・E–Bの5個に置く厳密値です。入力欄の値は途中で丸めません。
+  - 掲載図のC・Gの長三度388.8は、同じ図の五度697.3と両立しません（狭い五度が697.25以上なら、その4個からなる長三度は389.0以上）。本ツールでは389.1と表示されます。
+  - 以前の値（五度697.2基準）は https://pianotuning.jp/?page_id=100 にある2013年版の図 56.BachsSeal2013-06-17inori.jpg と24値が一致していました。
 - Bach’s Seal 1.5: https://pianotuning.jp/?page_id=2153 （五度・長三度24値と照合済み）
 - Schnitger: https://pianotuning.jp/?page_id=2295 （五度・長三度24値と照合済み）
 - Bach’s Seal 1.0: https://pianotuning.jp/?page_id=2306 （五度・長三度24値と照合済み）
