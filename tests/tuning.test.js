@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildModel, ellipseGeometry, parseCents, labelFitScale, rootLabel, thirdLabel, matchPreset, PRESETS } = require('../tuning.js');
+const { buildModel, ellipseGeometry, innerRadius, parseCents, labelFitScale, rootLabel, thirdLabel, matchPreset, PRESETS } = require('../tuning.js');
 const equal = Array.from({ length: 12 }, (_, i) => i * 100);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 
@@ -38,10 +38,22 @@ test('Kirnberger I rounded example has D-A wolf and pure principal triads', () =
   for (const s of m.sectors) if (s.root !== 2 && s.root !== 6) near(s.fifth, 702);
   for (const root of [5, 0, 7]) { const s = m.sectors.find(v => v.root === root); near(s.third, 386); near(s.fifth, 702); }
 });
-test('exact 5:4 third in a 700-cent fifth sector is circular and tangent', () => {
-  const g = ellipseGeometry(1200 * Math.log2(5/4), 30, 300);
+// The source method (page 236) makes the 386-cent third the circle inscribed in the 700-cent sector
+// and divides the ruler gap between 400 and 386 into 14 one-cent steps.
+test('386-cent third in a 700-cent fifth sector is circular and tangent', () => {
+  const g = ellipseGeometry(386, 30, 300);
   near(g.radial, g.tangential);
   near(g.center + g.radial, 300);
+});
+test('exact 5:4 third is slightly taller than the circle, as in the source ruler', () => {
+  const g = ellipseGeometry(1200 * Math.log2(5/4), 30, 300);
+  assert.ok(g.radial > g.tangential);
+});
+test('one ruler cent is 1/14 of the gap between the half radius (400) and the inscribed circle (386)', () => {
+  const s = Math.sin(Math.PI / 12), circleInner = 300 * (1 - s) / (1 + s);
+  const step = (circleInner - 150) / 14;
+  near(innerRadius(386, 300), circleInner);
+  for (const c of [380, 386, 393, 400, 408, 428]) near(innerRadius(c, 300) - innerRadius(c + 1, 300), step);
 });
 
 test('non-pure thirds touch both sector sides and the outer circle', () => {

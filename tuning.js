@@ -62,9 +62,11 @@
     lehman: ['1', '2^(5/3)/3', '2^(10/3)/9', '2^(11/6)/3', '2^(20/3)/81', '3*2^(-7/6)', '2^(11/3)/9', '2^(13/6)/3', '2^(9/4)/3', '2^(11/2)/27', '2^(29/12)/3', '2^(17/3)/27']
   };
   const DEG_PER_CENT = 30 / 700 * 10;
-  const PURE_THIRD = 1200 * Math.log2(5 / 4);
-  const PURE_INNER = (1 - Math.sin(Math.PI / 12)) / (1 + Math.sin(Math.PI / 12));
-  const RADIAL_PER_CENT = (PURE_INNER - 0.5) / (400 - PURE_THIRD);
+  // As in the source method (page 236): the 386-cent third (not the exact 5:4) is the circle inscribed in
+  // the 700-cent sector, and the ruler gap between 400 (half radius) and 386 is divided into 14 cents.
+  const CIRCLE_THIRD = 386;
+  const CIRCLE_INNER = (1 - Math.sin(Math.PI / 12)) / (1 + Math.sin(Math.PI / 12));
+  const RADIAL_PER_CENT = (CIRCLE_INNER - 0.5) / (400 - CIRCLE_THIRD);
   function parseCents(text) {
     if (String(text).trim() === '' || !Number.isFinite(Number(text))) throw new Error('すべての音に有限の数値を入力してください。');
     return Number(text);
@@ -116,7 +118,7 @@
   // The preset (key of `presets`, each twelve cents) whose every note is within `tolerance` cent of `pitches`.
   const matchPreset = (pitches, presets, tolerance) =>
     Object.keys(presets).find(key => presets[key].every((v, i) => Math.abs(v - pitches[i]) <= tolerance));
-  const api = { NAMES, SHORT, ORDER, PRESETS, PRESET_RATIOS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale, rootLabel, thirdLabel, matchPreset };
+  const api = { NAMES, SHORT, ORDER, PRESETS, PRESET_RATIOS, CIRCLE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale, rootLabel, thirdLabel, matchPreset };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else host.Tuning = api;
 })(globalThis);

@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const { NAMES, SHORT, PURE_THIRD, PRESETS, PRESET_RATIOS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel, matchPreset } = Tuning;
+  const { NAMES, SHORT, CIRCLE_THIRD, PRESETS, PRESET_RATIOS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel, matchPreset } = Tuning;
   const { thirdColor, fifthColor, textColor } = TuningPalette;
   const { parseRatio, ratioCents, formatRatio, sameRatio, centsToRatio, reduceOctave, checkOctave, MAX_LENGTH } = Ratio;
   const NS = 'http://www.w3.org/2000/svg';
@@ -98,7 +98,8 @@
       const mark = cent === 400 || cent === 408;
       svg.append(node('circle', { cx: center, cy: center, r: innerRadius(cent, R), fill: 'none', stroke: thirdColor(cent), 'stroke-width': mark ? 1.8 : cent < 400 ? .8 : .6, opacity: mark ? .6 : cent > 408 ? .45 : .9 }));
     }
-    svg.append(node('circle', { cx: center, cy: center, r: innerRadius(PURE_THIRD, R), fill: 'none', stroke: thirdColor(PURE_THIRD), 'stroke-width': 1.8, opacity: .5 }));
+    // The ring the inscribed 386-cent circle touches is emphasised (yellow in the source method).
+    svg.append(node('circle', { cx: center, cy: center, r: innerRadius(CIRCLE_THIRD, R), fill: 'none', stroke: thirdColor(CIRCLE_THIRD), 'stroke-width': 1.8, opacity: .5 }));
     for (let i = 0; i < 12; i++) {
       const p = xy(R + 20, 90 - i * 30);
       svg.append(node('line', { x1: center, y1: center, x2: p[0], y2: p[1], stroke: '#888888', 'stroke-width': 1, 'stroke-dasharray': '2 3' }));
@@ -274,7 +275,7 @@
   });
   download.addEventListener('click', () => {
     const svg = document.querySelector('#figure svg').cloneNode(true);
-    const metadata = node('metadata', {}, JSON.stringify({ pitches: lastPitches, reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: PURE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') }));
+    const metadata = node('metadata', {}, JSON.stringify({ pitches: lastPitches, reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: CIRCLE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') }));
     svg.append(metadata);
     const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = 'tuning-figure.svg'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
