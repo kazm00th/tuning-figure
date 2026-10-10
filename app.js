@@ -1,7 +1,8 @@
 (() => {
   'use strict';
-  const { NAMES, SHORT, PURE_THIRD, PRESETS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel } = Tuning;
+  const { NAMES, SHORT, PURE_THIRD, PRESETS, PRESET_RATIOS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel } = Tuning;
   const { thirdColor, fifthColor, textColor } = TuningPalette;
+  const { parseRatio, ratioCents, formatRatio, sameRatio, centsToRatio, reduceOctave, checkOctave, MAX_LENGTH } = Ratio;
   const NS = 'http://www.w3.org/2000/svg';
   // Modal RGB in an unmarked background patch of each sampled source image.
   const FIGURE_BACKGROUND = '#fce8cf';
@@ -39,7 +40,14 @@
   const inputArea = document.getElementById('note-inputs');
   const status = document.getElementById('status');
   const download = document.getElementById('download');
-  const fields = [], deltas = [];
+  const fields = [], deltas = [], notes = [];
+  // 'cents' or 'ratio'; lastPitches are the cents last drawn (used for the SVG metadata).
+  let mode = 'cents', lastField = null, lastPitches = equal.slice();
+  const PRESET_PARSED = Object.fromEntries(Object.entries(PRESET_RATIOS).map(([key, texts]) => [key, texts.map(parseRatio)]));
+  const HELP = {
+    cents: 'Cからの音程をcentで入力。小数に対応し、入力のたびに描画します。',
+    ratio: 'Cからの周波数比を式で入力（1以上2未満）。例：3/2、5^(1/4)、2^(13/6)/3、√5/2、√[4]5、10^(7/8)/5。小数は使えません。'
+  };
   const fmt = (v, digits = 1) => Number(v.toFixed(digits)).toString();
   const signed = (v, digits = 1) => `${v > 0 && Number(v.toFixed(digits)) !== 0 ? '+' : ''}${fmt(v, digits)}`;
   function node(tag, attrs = {}, text) {
@@ -138,16 +146,43 @@
       return tr;
     }));
   }
+  function readCents() {
+    return fields.map((field, i) => {
+      try { return parseCents(field.value); }
+      catch (error) { field.setAttribute('aria-invalid', 'true'); throw new Error(`${NAMES[i]}：${error.message}`); }
+    });
+  }
+  // Ratio mode reads every field so each shows its own normal form or error, then reports the first error.
+  function readRatios() {
+    let first = null;
+    const pitches = fields.map((field, i) => {
+      try {
+        const r = parseRatio(field.value), cents = checkOctave(r);
+        notes[i].textContent = `= ${formatRatio(r)}　${cents.toFixed(3)} cent`; notes[i].className = 'ratio-note';
+        return cents;
+      } catch (error) {
+        field.setAttribute('aria-invalid', 'true');
+        notes[i].textContent = error.message; notes[i].className = 'ratio-note error';
+        first = first || new Error(`${NAMES[i]}：${error.message}`);
+        return NaN;
+      }
+    });
+    if (first) throw first;
+    return pitches;
+  }
+  function findPreset(pitches) {
+    if (mode === 'cents') return Object.keys(PRESETS).find(key => pitches.every((v, i) => v === PRESETS[key][i]));
+    const parsed = fields.map(f => parseRatio(f.value));
+    return Object.keys(PRESET_PARSED).find(key => PRESET_PARSED[key].every((r, i) => sameRatio(r, parsed[i])));
+  }
   function update() {
     for (const field of fields) field.removeAttribute('aria-invalid');
     try {
-      const pitches = fields.map((field, i) => {
-        try { return parseCents(field.value); }
-        catch (error) { field.setAttribute('aria-invalid', 'true'); throw new Error(`${NAMES[i]}：${error.message}`); }
-      });
+      const pitches = mode === 'cents' ? readCents() : readRatios();
       for (let i = 1; i < 12; i++) if (pitches[i] <= pitches[i - 1] || pitches[i] >= 1200) fields[i].setAttribute('aria-invalid', 'true');
       const model = buildModel(pitches);
-      const presetKey = Object.keys(PRESETS).find(key => pitches.every((v, i) => v === PRESETS[key][i]));
+      lastPitches = pitches;
+      const presetKey = findPreset(pitches);
       const info = presetInfo[presetKey];
       const title = info ? info.title : 'カスタム調律';
       render(model, title, SOURCE_BACKGROUNDS[info?.page] || FIGURE_BACKGROUND);
@@ -171,17 +206,67 @@
     const row = document.createElement('div'); row.className = 'note-row';
     const label = document.createElement('label'); label.htmlFor = `pitch-${i}`; label.textContent = NAMES[i];
     const input = document.createElement('input'); input.type = 'text'; input.inputMode = 'decimal'; input.id = `pitch-${i}`; input.value = equal[i]; input.autocomplete = 'off'; input.spellcheck = false;
-    input.setAttribute('aria-label', `${NAMES[i]} の音程 cent`); input.setAttribute('aria-describedby', 'status');
+    input.setAttribute('aria-label', `${NAMES[i]} の音程 cent`); input.setAttribute('aria-describedby', `status ratio-note-${i}`);
+    input.addEventListener('focus', () => { lastField = input; });
     if (i === 0) { input.readOnly = true; input.setAttribute('aria-label', 'C の音程 cent 固定'); }
     else input.addEventListener('input', update);
     const delta = document.createElement('span'); delta.className = 'delta'; delta.textContent = '0';
-    fields.push(input); deltas.push(delta); row.append(label, input, delta); inputArea.append(row);
+    const note = document.createElement('span'); note.className = 'ratio-note'; note.id = `ratio-note-${i}`; note.hidden = true;
+    fields.push(input); deltas.push(delta); notes.push(note); row.append(label, input, delta, note); inputArea.append(row);
   }
-  function setPreset(values) { fields.forEach((f, i) => { f.value = values[i]; }); update(); }
-  for (const [key, values] of Object.entries(PRESETS)) document.getElementById(key).addEventListener('click', () => setPreset(values));
+  // In ratio mode a preset fills its exact ratios (PRESET_RATIOS), not the rounded figure cents.
+  function setPreset(key) { const values = mode === 'cents' ? PRESETS[key] : PRESET_RATIOS[key]; fields.forEach((f, i) => { f.value = values[i]; }); update(); }
+  for (const key of Object.keys(PRESETS)) document.getElementById(key).addEventListener('click', () => setPreset(key));
+  // Switching converts every field (cent → 2^(c/1200), ratio → cents); an unreadable field stops the switch.
+  function setMode(next) {
+    if (next === mode) return;
+    let values;
+    try {
+      values = fields.map((f, i) => {
+        try { return next === 'ratio' ? formatRatio(centsToRatio(f.value)) : String(checkOctave(parseRatio(f.value))); }
+        catch (error) { throw new Error(`${NAMES[i]}：${error.message}`); }
+      });
+    } catch (error) {
+      status.textContent = `${error.message} 入力を直してから切り替えてください。`; status.className = 'status error';
+      return;
+    }
+    mode = next;
+    fields.forEach((f, i) => {
+      f.value = values[i];
+      f.inputMode = mode === 'cents' ? 'decimal' : 'text';
+      if (mode === 'ratio') f.setAttribute('maxlength', String(MAX_LENGTH)); else f.removeAttribute('maxlength');
+      f.setAttribute('aria-label', `${NAMES[i]} の${mode === 'cents' ? '音程 cent' : '周波数比'}${i === 0 ? ' 固定' : ''}`);
+      notes[i].hidden = mode === 'cents'; notes[i].textContent = '';
+    });
+    document.getElementById('mode-cents').setAttribute('aria-checked', String(mode === 'cents'));
+    document.getElementById('mode-ratio').setAttribute('aria-checked', String(mode === 'ratio'));
+    document.getElementById('ratio-tools').hidden = mode === 'cents';
+    document.getElementById('input-help').textContent = HELP[mode];
+    document.getElementById('value-heading').textContent = mode === 'cents' ? 'Cから / cent' : 'Cからの比';
+    update();
+  }
+  document.getElementById('mode-cents').addEventListener('click', () => setMode('cents'));
+  document.getElementById('mode-ratio').addEventListener('click', () => setMode('ratio'));
+  document.getElementById('insert-root').addEventListener('click', () => {
+    const f = lastField && !lastField.readOnly ? lastField : fields[1];
+    if (typeof f.setRangeText === 'function') f.setRangeText('√', f.selectionStart ?? f.value.length, f.selectionEnd ?? f.value.length, 'end');
+    else f.value += '√';
+    if (typeof f.focus === 'function') f.focus();
+    update();
+  });
+  // Rewrites only the fields that read but fall outside one octave; unreadable fields keep their message.
+  document.getElementById('reduce-octave').addEventListener('click', () => {
+    fields.forEach((f, i) => {
+      if (i === 0) return;
+      let r;
+      try { r = parseRatio(f.value); } catch { return; }
+      try { checkOctave(r); } catch { f.value = formatRatio(reduceOctave(r)); }
+    });
+    update();
+  });
   download.addEventListener('click', () => {
     const svg = document.querySelector('#figure svg').cloneNode(true);
-    const metadata = node('metadata', {}, JSON.stringify({ pitches: fields.map(f => Number(f.value)), reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: PURE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') }));
+    const metadata = node('metadata', {}, JSON.stringify({ pitches: lastPitches, reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: PURE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') }));
     svg.append(metadata);
     const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' }));
     const a = document.createElement('a'); a.href = url; a.download = 'tuning-figure.svg'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
