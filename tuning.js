@@ -74,7 +74,17 @@
     const half = Math.tan(span * Math.PI / 360);
     return Math.min(1, ...lines.map(l => (2 * l.top * half - 2 * pad) / l.width));
   }
-  const api = { NAMES, SHORT, ORDER, PRESETS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale };
+  // Note names drawn in the figure, as on the type-A source figures (17 of 25): sharp/flat before
+  // the letter, lines from the outer circle outwards. Thirds use keyboard names in lower case.
+  const ROOT_LABELS = [['C'], ['♯C', '♭D'], ['D'], ['♭E'], ['E'], ['F'], ['♯F', '♭G'], ['G'], ['♭A'], ['A'], ['♭B'], ['B']];
+  const THIRD_LABELS = [['c'], ['♯c'], ['d'], ['♯d'], ['e'], ['f'], ['♯f'], ['g'], ['♯g'], ['a'], ['♯a', '♭b'], ['b']];
+  const BLACK_KEYS = [1, 3, 6, 8, 10];
+  const figureLabel = table => pc => {
+    const i = ((pc % 12) + 12) % 12;
+    return { lines: table[i], accidental: BLACK_KEYS.includes(i) };
+  };
+  const rootLabel = figureLabel(ROOT_LABELS), thirdLabel = figureLabel(THIRD_LABELS);
+  const api = { NAMES, SHORT, ORDER, PRESETS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale, rootLabel, thirdLabel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else host.Tuning = api;
 })(globalThis);

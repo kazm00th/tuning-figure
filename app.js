@@ -1,13 +1,16 @@
 (() => {
   'use strict';
-  const { NAMES, SHORT, PURE_THIRD, PRESETS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale } = Tuning;
+  const { NAMES, SHORT, PURE_THIRD, PRESETS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale, rootLabel, thirdLabel } = Tuning;
   const { thirdColor, fifthColor, textColor } = TuningPalette;
   const NS = 'http://www.w3.org/2000/svg';
   // Modal RGB in an unmarked background patch of each sampled source image.
   const FIGURE_BACKGROUND = '#fce8cf';
   // Number labels use Meiryo UI as in the source figures; other platforms fall back.
   const LABEL_FONT = "'Meiryo UI', Meiryo, system-ui, sans-serif";
-  const SOURCE_BACKGROUNDS = {1783:'#fde9d1',2153:'#fde8d0',2284:'#fde9d1',2295:'#fde9d1',4026:'#fde9d1',4362:'#fde8d0',1545:'#fde9d1'};
+  // Note names, matched to the type-A source figures (outer circle R = 315).
+  const NAME_STYLE = { root: { size: 26.5, base: 27.3, gap: 21.8, outline: 1.15, sign: .8, kern: -1.5 }, third: { size: 21, base: 18.3, gap: 17, outline: .6, sign: .85, kern: -2 } };
+  const NAME_INK = { outline: '#666666', black: '#222222' };
+  const SOURCE_BACKGROUNDS ={1783:'#fde9d1',2153:'#fde8d0',2284:'#fde9d1',2295:'#fde9d1',4026:'#fde9d1',4362:'#fde8d0',1545:'#fde9d1'};
   const { equal } = PRESETS;
   const presetInfo = {
     equal: { title: '平均律', note: '平均律は半音ごとに100 centです。' },
@@ -55,6 +58,20 @@
   function render(model, title, background = FIGURE_BACKGROUND) {
     const R = 315, center = 425;
     const xy = (r, a) => [center + r * Math.cos(a * Math.PI / 180), center + r * Math.sin(a * Math.PI / 180)];
+    // A note name rotated with its sector (top toward the centre), first baseline at R + base.
+    // Natural notes are grey outlines and sharps/flats solid black, as on every source figure.
+    function noteName({ lines, accidental }, style, angle) {
+      const p = xy(R + style.base, angle);
+      const paint = accidental ? { fill: NAME_INK.black } : { fill: 'none', stroke: NAME_INK.outline, 'stroke-width': style.outline };
+      const text = node('text', { transform: `translate(${p.join(' ')}) rotate(${angle - 90})`, 'data-label': 'name', 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': style.size, ...paint });
+      lines.forEach((line, i) => {
+        const start = { x: 0, ...(i ? { dy: style.gap } : {}) };
+        // The source's sharp and flat are smaller than the letter and sit close to it.
+        if (accidental) text.append(node('tspan', { ...start, 'font-size': style.size * style.sign }, line[0]), node('tspan', { dx: style.kern }, line.slice(1)));
+        else text.append(node('tspan', start, line));
+      });
+      return text;
+    }
     // Crop to the source's margins: width 2.43 R and height 2.52 R around the centre.
     const svg = node('svg', { xmlns: NS, viewBox: '43 28 764 794', role: 'img', 'aria-labelledby': 'svg-title svg-desc', 'font-family': 'system-ui, sans-serif' });
     svg.append(node('title', { id: 'svg-title' }, `Temperament Circle Diagram — ${title}`));
@@ -94,10 +111,8 @@
       const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'data-span': s.span, 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
       fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 11 }, `(${signed(s.fifth - 702)})`));
       svg.append(fLabel);
-      const root = xy(R + 35, s.start);
-      svg.append(node('text', { x: root[0], y: root[1] + 4, 'text-anchor': 'middle', 'font-size': 23, 'font-weight': 600, fill: '#334d40' }, SHORT[s.root]));
-      const thirdName = xy(R + 13, mid);
-      svg.append(node('text', { x: thirdName[0], y: thirdName[1] + 4, 'text-anchor': 'middle', 'font-size': 13, fill: '#73816d' }, SHORT[s.middle].toLowerCase()));
+      svg.append(noteName(rootLabel(s.root), NAME_STYLE.root, s.start));
+      svg.append(noteName(thirdLabel(s.middle), NAME_STYLE.third, mid));
     }
     svg.append(node('circle', { cx: center, cy: center, r: R, fill: 'none', stroke: '#778975', 'stroke-width': 1 }));
     svg.append(node('circle', { cx: center, cy: center, r: 53, fill: '#f7b779', stroke: '#7a6450', 'stroke-width': 1 }));

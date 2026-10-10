@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildModel, ellipseGeometry, parseCents, labelFitScale, PRESETS } = require('../tuning.js');
+const { buildModel, ellipseGeometry, parseCents, labelFitScale, rootLabel, thirdLabel, PRESETS } = require('../tuning.js');
 const equal = Array.from({ length: 12 }, (_, i) => i * 100);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 
@@ -104,4 +104,20 @@ test('fifth labels shrink just enough to fit the narrowest line between the sect
   assert.ok(scale < 1);
   for (const l of lines) assert.ok(l.width * scale <= free(l) + 1e-9);
   near(Math.max(...lines.map(l => l.width * scale - free(l))), 0);
+});
+
+// Note names as written on the type-A source figures (17 of 25, e.g. Kirnberger III, page 20):
+// sharp/flat before the letter; lines listed from the outer circle outwards.
+test('outer note names follow the type-A source figures', () => {
+  const want = [['C'], ['♯C', '♭D'], ['D'], ['♭E'], ['E'], ['F'], ['♯F', '♭G'], ['G'], ['♭A'], ['A'], ['♭B'], ['B']];
+  want.forEach((lines, pc) => {
+    assert.deepEqual(rootLabel(pc), { lines, accidental: [1, 3, 6, 8, 10].includes(pc) });
+  });
+});
+test('third names are keyboard names in lower case, A♯/B♭ in two lines', () => {
+  const want = [['c'], ['♯c'], ['d'], ['♯d'], ['e'], ['f'], ['♯f'], ['g'], ['♯g'], ['a'], ['♯a', '♭b'], ['b']];
+  want.forEach((lines, pc) => {
+    assert.deepEqual(thirdLabel(pc), { lines, accidental: [1, 3, 6, 8, 10].includes(pc) });
+  });
+  assert.deepEqual(thirdLabel(-4), thirdLabel(8)); assert.deepEqual(thirdLabel(16), thirdLabel(4));
 });
