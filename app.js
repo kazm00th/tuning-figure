@@ -40,6 +40,8 @@
   const inputArea = document.getElementById('note-inputs');
   const status = document.getElementById('status');
   const download = document.getElementById('download');
+  const downloadPng = document.getElementById('download-png');
+  const pngScale = document.getElementById('png-scale');
   const fields = [], deltas = [], notes = [];
   // 'cents' or 'ratio'; lastPitches are the cents last drawn (used for the SVG metadata).
   let mode = 'cents', lastField = null, lastPitches = equal.slice();
@@ -205,10 +207,10 @@
       }
       for (const key of Object.keys(PRESETS)) document.getElementById(key).setAttribute('aria-pressed', String(key === presetKey));
       pitches.forEach((v, i) => { deltas[i].textContent = signed(v - equal[i], 2); });
-      status.textContent = '入力値を反映しました · 点線は平均律の位置'; status.className = 'status'; download.disabled = false;
+      status.textContent = '入力値を反映しました · 点線は平均律の位置'; status.className = 'status'; download.disabled = downloadPng.disabled = false;
     } catch (error) {
       status.textContent = `${error.message} 現在は直前の有効な図・表を表示しています。`;
-      status.className = 'status error'; download.disabled = true;
+      status.className = 'status error'; download.disabled = downloadPng.disabled = true;
     }
   }
   for (let i = 0; i < 12; i++) {
@@ -273,12 +275,48 @@
     });
     update();
   });
+  // The same JSON goes into the SVG's <metadata> and the PNG's iTXt chunk "tuning-figure".
+  function figureMetadata(svg) {
+    return JSON.stringify({ pitches: lastPitches, reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: CIRCLE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') });
+  }
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  const svgBlob = svg => new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' });
   download.addEventListener('click', () => {
     const svg = document.querySelector('#figure svg').cloneNode(true);
-    const metadata = node('metadata', {}, JSON.stringify({ pitches: lastPitches, reference: 'https://pianotuning.jp/?page_id=236', fifthReference: 702, thirdReference: 386, circleThirdReference: CIRCLE_THIRD, circleFifthReference: 700, colorReferences: [20, 32, 36, 39, 42, 45, 100, 135, 215, 496, 598, 691, 1545, 1783, 2153, 2284, 2295, 2306, 2680, 3448, 3462, 3717, 4026, 4362], fifthColorModel: 'lab-d50-invpow-grey-quadratic-pink-v2', fifthColorRange: [680, 738.5], thirdColorModel: 'lch-d50-bumped-main-figures-v2', thirdColorRange: [384, 428], rgbGamutMapping: 'component-clipping', figureBackground: svg.querySelector('rect').getAttribute('fill') }));
-    svg.append(metadata);
-    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml;charset=utf-8' }));
-    const a = document.createElement('a'); a.href = url; a.download = 'tuning-figure.svg'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    svg.append(node('metadata', {}, figureMetadata(svg)));
+    saveBlob(svgBlob(svg), 'tuning-figure.svg');
+  });
+  // PNG: draw the figure's SVG at the chosen scale on a canvas (fonts are the viewer's, as on screen),
+  // then add the title and the same metadata as iTXt chunks.
+  downloadPng.addEventListener('click', async () => {
+    const svg = document.querySelector('#figure svg').cloneNode(true);
+    const scale = Number(pngScale.value);
+    const [, , w, h] = svg.getAttribute('viewBox').split(' ').map(Number);
+    svg.setAttribute('width', w * scale); svg.setAttribute('height', h * scale);
+    const url = URL.createObjectURL(svgBlob(svg));
+    downloadPng.disabled = true;
+    try {
+      const image = new Image();
+      await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error('図を画像にできませんでした。')); image.src = url; });
+      const canvas = document.createElement('canvas');
+      canvas.width = w * scale; canvas.height = h * scale;
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      const png = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('PNG を作れませんでした。倍率を下げてください。')), 'image/png'));
+      const bytes = Png.addPngText(new Uint8Array(await png.arrayBuffer()), [
+        ['Title', svg.querySelector('title').textContent],
+        ['Software', 'tuning-figure (https://kazm00th.github.io/tuning-figure/)'],
+        ['tuning-figure', figureMetadata(svg)]
+      ]);
+      saveBlob(new Blob([bytes], { type: 'image/png' }), 'tuning-figure.png');
+    } catch (error) {
+      status.textContent = error.message; status.className = 'status error';
+    } finally {
+      URL.revokeObjectURL(url);
+      downloadPng.disabled = download.disabled;
+    }
   });
   update();
 })();

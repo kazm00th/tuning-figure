@@ -10,16 +10,19 @@
 - 入力のたびにSVGを更新します。小数に対応します。
 - プリセットは平均律、Kirnberger I、Bach WTC / Jobin、Meantone、Base of Bach WTC、VeryWell 2.0、Praetorius、Bach / Kellnerに加え、参照ページから追加した14例の計22種類。選択すると全音の値と図が即座に切り替わります。選択後の手動編集も可能です。
 - 「SVGを保存」で図を保存できます。
+- 「PNGを保存」で図をPNG画像として保存できます。倍率は1〜4倍（1倍は764×794画素、既定は2倍）。文字は画面と同じく見る人の環境の書体で描かれます。PNGにはiTXtチャンク（UTF-8）で、図の題名（Title）、作成ソフト（Software）、SVGのmetadataと同じJSON（キーワード tuning-figure）を入れます。
 - 再読み込みすると平均律に戻ります。入力値の自動保存機能はありません。
-- 数値はCから昇順、1200 cent未満で入力します。空欄や作図範囲外の間は直前の図を残し、理由を表示します。その間はSVG保存を無効にします。
+- 数値はCから昇順、1200 cent未満で入力します。空欄や作図範囲外の間は直前の図を残し、理由を表示します。その間はSVG・PNGの保存を無効にします。
 
 ## ファイル
 
 - index.html: 画面、CSS、説明
 - tuning.js: 音程計算と幾何計算（ブラウザーとNode.jsで共用）
 - palette.js: 基準ページの色と補間、文字のコントラスト
-- app.js: 入力、SVG描画、表、SVG保存
+- png.js: PNGにテキストのメタデータ（iTXtチャンク）を書き込む（ブラウザーとNode.jsで共用）
+- app.js: 入力、SVG描画、表、SVG・PNG保存
 - tests/tuning.test.js: 計算の検証
+- tests/png.test.js: PNGのメタデータの書き込みの検証（CRCと期待値はNode.jsのzlibで独立に計算）
 
 ## 作図の定義
 
