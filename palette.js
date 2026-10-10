@@ -29,20 +29,35 @@
     }
     return hex(stops[stops.length-1][1]);
   }
-  // Full-precision L/C coefficients from third-lch-fit.json (ascending powers of t).
-  const THIRD_LC = [
-    [[81.62269140256141,65.56911951541251],[15.24041412348106,10.223982612576535]],
-    [[96.86310552604247,75.79310212798904],[-51.408753707784165,-28.734905442729183],[89.69325403924225,-65.3629360200593],[-148.46586265911628,124.3698153802159],[77.8610494039813,-50.017991789371294]],
-    [[64.54279260236558,56.04708425604517],[-79.00191137253961,-133.10236613567264],[17.46783419913339,199.6535492035091],[55.71146577369541,-133.10236613567267],[-30.767038586703254,33.27559153391815]]
-  ];
+  // Third colours (v2), fitted to the main figures' per-cent mean colours (CIE LCh, D50).
+  // L* and C* rise linearly from 384 to the measured maximum at 386 cent and hold it to the pure third.
+  const PURE=1200*Math.log2(5/4), PYTH=1200*Math.log2(81/64);
+  const L384=81.62269140256141, C384=65.56911951541251, LMAX=94.908, CMAX=75.018;
+  // L*: concave quadratic to the Pythagorean third, then an exponential tail with matching value and slope,
+  // plus a flat-topped bump over 401-410 cent.
+  const TL={s:-2.218905275533379,q:-0.009054941960713913,inf:28.78607567578492,B:1.832479628286403,mu:405.82191800474095,w:4.741119322453047,beta:5.540519608922919};
+  // C*: logistic decay plus a sharp bump peaking at 400 cent and a narrow dip at 397.5 cent.
+  const TC={inf:24.839992064046672,m:392.10391797514643,w:5.108862639939975,B:20.601497506641685,s:4.225485001064182,beta:1.40757352809885,dip:2.433621220960859,dipMu:397.5229357862231,dipW:0.7692967344574323};
+  // h: logistic plus a flat-topped downward bump.
+  const TH={a:91.39054896048499,b:148.08210279439027,k:0.21173656564902385,m:400.8648534935343,B:-11.427943887179248,mu:403.8227397496136,w:4.153265433743644,beta:3.0352432241339424};
+  const genGauss=(x,B,mu,w,beta)=>B*Math.exp(-(Math.abs((x-mu)/w)**beta));
+  const thirdBumpC=x=>genGauss(x,TC.B,400,TC.s,TC.beta)-TC.dip*Math.exp(-(((x-TC.dipMu)/TC.dipW)**2));
+  const thirdDecayC=x=>1/(1+Math.exp((x-TC.m)/TC.w));
   function thirdLch(value) {
     if (!Number.isFinite(value)) throw new Error('色の計算には有限のcent値が必要です。');
     const c=Math.max(384,Math.min(428,value));
-    const knots=[384,1200*Math.log2(5/4),400,428];
-    const j=c<knots[1]?0:c<400?1:2;
-    const t=(c-knots[j])/(knots[j+1]-knots[j]);
-    const [L,C]=THIRD_LC[j].reduceRight(([l,a],[x,y])=>[l*t+x,a*t+y],[0,0]);
-    const h=91.62802015984734+152.42338423628564/(1+Math.exp(-.18828126070410406*(c-402.11542070352215)));
+    const h=TH.a+TH.b/(1+Math.exp(-TH.k*(c-TH.m)))+genGauss(c,TH.B,TH.mu,TH.w,TH.beta);
+    if (c<386) { const t=(c-384)/2; return [L384+(LMAX-L384)*t,C384+(CMAX-C384)*t,h]; }
+    if (c<PURE) return [LMAX,CMAX,h];
+    const d=c-PURE, dk=PYTH-PURE;
+    let L;
+    if (c<=PYTH) L=LMAX+TL.s*d+TL.q*d*d;
+    else {
+      const L1=LMAX+TL.s*dk+TL.q*dk*dk, s1=TL.s+2*TL.q*dk;
+      L=TL.inf+(L1-TL.inf)*Math.exp(-(c-PYTH)/((L1-TL.inf)/-s1));
+    }
+    L+=genGauss(c,TL.B,TL.mu,TL.w,TL.beta);
+    const C=TC.inf+(CMAX-TC.inf-thirdBumpC(PURE))/thirdDecayC(PURE)*thirdDecayC(c)+thirdBumpC(c);
     return [L,C,h];
   }
   function thirdLab(value) {
@@ -50,16 +65,18 @@
     return [L,C*Math.cos(r),C*Math.sin(r)];
   }
   const thirdColor = value => hex(labToRgb(thirdLab(value)));
-  // Gray curve plus a discontinuous quadratic pink fit, in CIE Lab D50.
+  // Fifth colours (v2), CIE Lab D50: black up to 680, a grey ramp to white at 702 (inverse power; the
+  // figures have no data between 680 and 696), then a discontinuous pink with quadratic L*/C* and constant hue.
+  const FIFTH_GREY=1.1251404620039, FIFTH_L=[96.64117060136272,-1.2320812972133477,-0.00578128025561412];
+  const FIFTH_C=[5.818261166099397,0.4956988742233433,0.006655015773331193], FIFTH_H=348.6281776102556*Math.PI/180;
   function fifthLab(value) {
     if (!Number.isFinite(value)) throw new Error('色の計算には有限のcent値が必要です。');
     if (value<=680) return [0,0,0];
-    if (value<=702) return [100*((value-680)/22)**.82,0,0];
+    if (value<=702) return [100*(1-((702-value)/22)**FIFTH_GREY),0,0];
     // Extrapolation beyond the measured range is unverified: retain its endpoint.
     const d=Math.min(value,738.5)-702;
-    return [95.8634-1.18098*d-.00692859*d*d,
-            6.40959+.410919*d+.00884569*d*d,
-            -.840578-.157662*d+.000665994*d*d];
+    const L=FIFTH_L[0]+FIFTH_L[1]*d+FIFTH_L[2]*d*d, C=FIFTH_C[0]+FIFTH_C[1]*d+FIFTH_C[2]*d*d;
+    return [L,C*Math.cos(FIFTH_H),C*Math.sin(FIFTH_H)];
   }
   const multiply=(m,v)=>m.map(row=>row.reduce((sum,x,i)=>sum+x*v[i],0));
   function labToRgb([L,a,b]) {

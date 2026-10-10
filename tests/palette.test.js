@@ -1,12 +1,18 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const {thirdColor,thirdLch,fifthColor,fifthLab,labToRgb,textColor} = require('../palette.js');
-// Independent modal RGB measurements from the supplied reference images.
+// Expected colours from an independent Python implementation of the v2 formulas (fit to the main figures).
 test('third colors agree with independent Python LCh palette including gamut clipping', () => {
-  for(const [cent,want] of [[384,'#d8cd46'],[386,'#fbf555'],[392,'#bed85e'],[400,'#27b36c'],[402,'#00a279'],[408,'#00767f'],[412,'#056174'],[428,'#124861']]) assert.equal(thirdColor(cent),want);
+  for(const [cent,want] of [[384,'#dacd46'],[386,'#fef454'],[392,'#bdd65c'],[397,'#6fbd66'],[400,'#13ae68'],[402,'#04a375'],[405,'#018c80'],[408,'#00757f'],[412,'#005c71'],[428,'#024b65']]) assert.equal(thirdColor(cent),want);
+});
+test('third L*/C* peak at the measured maximum, held from 386 cent to the pure third',()=>{
+  for(const c of [386,1200*Math.log2(5/4)]) {
+    const [L,C]=thirdLch(c);
+    assert.ok(Math.abs(L-94.908)<1e-9);assert.ok(Math.abs(C-75.018)<1e-9);
+  }
 });
 test('third LCh boundaries are continuous and wide thirds have monotonic L/C/h',()=>{
-  for(const b of [1200*Math.log2(5/4),400]) {
+  for(const b of [386,1200*Math.log2(5/4),1200*Math.log2(81/64),400]) {
     const left=thirdLch(b-1e-7),right=thirdLch(b+1e-7);
     left.forEach((v,i)=>assert.ok(Math.abs(v-right[i])<1e-5));
   }
@@ -19,8 +25,8 @@ test('third LCh boundaries are continuous and wide thirds have monotonic L/C/h',
   assert.throws(()=>thirdColor(NaN));assert.throws(()=>thirdColor(Infinity));
 });
 test('fifth colors agree with independent Python Lab-to-sRGB palette conversion', () => {
-  // Expected values from fifth-color-palette-data.json, computed with inverse matrices.
-  for(const [cent,want] of [[680,'#000000'],[696.5,'#c4c4c4'],[700,'#e9e9e9'],[702,'#ffffff'],[702.1,'#ffeff5'],[703,'#fcebf2'],[705.5,'#f6e2ea'],[716.5,'#d7b6c5'],[727.5,'#b8859d'],[738.5,'#965072']]) assert.equal(fifthColor(cent),want);
+  // Expected values from the independent Python implementation of the v2 fifth formulas.
+  for(const [cent,want] of [[680,'#000000'],[690,'#767676'],[696.5,'#c4c4c4'],[700,'#ececec'],[702,'#ffffff'],[702.1,'#fff1f7'],[703,'#fdeef4'],[705.5,'#f6e4ec'],[716.5,'#d8b7c5'],[727.5,'#b8869d'],[738.5,'#965274']]) assert.equal(fifthColor(cent),want);
   assert.deepEqual(labToRgb([100,0,0]),[255,255,255]);
 });
 test('gray fifths are neutral and pink jumps immediately above 702',()=>{
@@ -28,7 +34,8 @@ test('gray fifths are neutral and pink jumps immediately above 702',()=>{
     const [r,g,b]=labToRgb(fifthLab(c));assert.equal(r,g);assert.equal(g,b);
   }
   const [L,a,b]=fifthLab(702+1e-7);
-  assert.ok(L<96 && Math.hypot(a,b)>6.4);
+  // The source already shows pink at 702.1 cent (L* 97.7, C* 3.9); v2 starts at L* 96.6, C* 5.8.
+  assert.ok(L<97 && Math.hypot(a,b)>5);
   assert.notEqual(fifthColor(702+1e-7),fifthColor(702));
 });
 test('palette clamps beyond fit bounds and rejects non-finite fifths', () => {
