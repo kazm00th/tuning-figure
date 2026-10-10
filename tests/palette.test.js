@@ -39,5 +39,5 @@ test('palette clamps beyond fit bounds and rejects non-finite fifths', () => {
 });
 test('label text chooses stronger contrast on black and white',()=>{
   assert.equal(textColor('#000000'),'#ffffff');
-  assert.equal(textColor('#ffffff'),'#26352b');
+  assert.equal(textColor('#ffffff'),'#000000');
 });

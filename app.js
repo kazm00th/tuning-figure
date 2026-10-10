@@ -5,6 +5,8 @@
   const NS = 'http://www.w3.org/2000/svg';
   // Modal RGB in an unmarked background patch of each sampled source image.
   const FIGURE_BACKGROUND = '#fce8cf';
+  // Number labels use Meiryo UI as in the source figures; other platforms fall back.
+  const LABEL_FONT = "'Meiryo UI', Meiryo, system-ui, sans-serif";
   const SOURCE_BACKGROUNDS = {1783:'#fde9d1',2153:'#fde8d0',2284:'#fde9d1',2295:'#fde9d1',4026:'#fde9d1',4362:'#fde8d0',1545:'#fde9d1'};
   const { equal } = PRESETS;
   const presetInfo = {
@@ -42,10 +44,11 @@
   function render(model, title, background = FIGURE_BACKGROUND) {
     const R = 315, center = 425;
     const xy = (r, a) => [center + r * Math.cos(a * Math.PI / 180), center + r * Math.sin(a * Math.PI / 180)];
-    const svg = node('svg', { xmlns: NS, viewBox: '0 0 850 850', role: 'img', 'aria-labelledby': 'svg-title svg-desc', 'font-family': 'system-ui, sans-serif' });
+    // Crop to the source's margins: width 2.43 R and height 2.52 R around the centre.
+    const svg = node('svg', { xmlns: NS, viewBox: '43 28 764 794', role: 'img', 'aria-labelledby': 'svg-title svg-desc', 'font-family': 'system-ui, sans-serif' });
     svg.append(node('title', { id: 'svg-title' }, `Temperament Circle Diagram — ${title}`));
     svg.append(node('desc', { id: 'svg-desc' }, 'Dを下に置く五度圏。扇形は五度、楕円は長三度の音程を表します。詳細な値はページ下の表にあります。'));
-    svg.append(node('rect', { width: 850, height: 850, fill: background }));
+    svg.append(node('rect', { x: 43, y: 28, width: 764, height: 794, fill: background }));
     // Line greys, widths and the 5-unit dash period were measured from the source figures (pages 32, 496, 691, 2295).
     for (const s of model.sectors) {
       const p = xy(R, s.start), q = xy(R, s.end);
@@ -59,25 +62,25 @@
     }
     svg.append(node('circle', { cx: center, cy: center, r: innerRadius(PURE_THIRD, R), fill: 'none', stroke: thirdColor(PURE_THIRD), 'stroke-width': 1.8, opacity: .5 }));
     for (let i = 0; i < 12; i++) {
-      const p = xy(R + 13, 90 - i * 30);
+      const p = xy(R + 20, 90 - i * 30);
       svg.append(node('line', { x1: center, y1: center, x2: p[0], y2: p[1], stroke: '#888888', 'stroke-width': 1, 'stroke-dasharray': '2 3' }));
     }
     for (const s of model.sectors) {
       const mid = (s.start + s.end) / 2;
       const g = ellipseGeometry(s.third, s.span, R);
       const p = xy(g.center, mid);
-      const ellipse = node('ellipse', { cx: p[0], cy: p[1], rx: g.radial, ry: g.tangential, transform: `rotate(${mid} ${p[0]} ${p[1]})`, fill: thirdColor(s.third), stroke: '#58634b', 'stroke-opacity': .38, 'stroke-width': .8 });
+      const ellipse = node('ellipse', { cx: p[0], cy: p[1], rx: g.radial, ry: g.tangential, transform: `rotate(${mid} ${p[0]} ${p[1]})`, fill: thirdColor(s.third), stroke: '#353535', 'stroke-opacity': .85, 'stroke-width': .9 });
       ellipse.append(node('title', {}, `${SHORT[s.root]}–${SHORT[s.middle]}–${SHORT[s.top]}：長三度 ${fmt(s.third, 3)} cent、五度 ${fmt(s.fifth, 3)} cent`));
       svg.append(ellipse);
-      // The source rotates each two-line label with its sector. Third labels sit
-      // toward the inner end of the ellipse rather than at its geometric center.
-      const labelPoint = xy(g.inner + .25 * (R - g.inner), mid);
-      const label = node('text', { x: 0, y: -2, transform: `translate(${labelPoint.join(' ')}) rotate(${mid - 90})`, 'data-label': 'third', 'text-anchor': 'middle', 'font-size': 14, fill: textColor(thirdColor(s.third)) });
-      label.append(node('tspan', { x: 0 }, fmt(s.third)), node('tspan', { x: 0, dy: 17, 'font-size': 12 }, `(${signed(s.third - 386)})`));
+      // The source rotates each two-line label with its sector. Third labels start a fixed
+      // distance from the ellipse's inner end (baselines 24.5 and 38.5 beyond it), whatever its size.
+      const labelPoint = xy(g.inner + 26.5, mid);
+      const label = node('text', { x: 0, y: -2, transform: `translate(${labelPoint.join(' ')}) rotate(${mid - 90})`, 'data-label': 'third', 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 14, fill: textColor(thirdColor(s.third)) });
+      label.append(node('tspan', { x: 0 }, fmt(s.third)), node('tspan', { x: 0, dy: 14, 'font-size': 12 }, `(${signed(s.third - 386)})`));
       svg.append(label);
       // Fifth labels sit just outside the centre disc as in the source (baselines at r = 70 and 81).
       const f = xy(72, mid);
-      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'text-anchor': 'middle', 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
+      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
       fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 11 }, `(${signed(s.fifth - 702)})`));
       svg.append(fLabel);
       const root = xy(R + 35, s.start);

@@ -84,9 +84,11 @@
     return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;
   }
   function textColor(color) {
+    // Decide light/dark against #26352b (keeps the source's white text on 404–406 cent ellipses),
+    // but draw dark text in black as the source does.
     const l=luminance(color), dark=luminance('#26352b');
     const contrastDark=(Math.max(l,dark)+0.05)/(Math.min(l,dark)+0.05);
-    return 1.05/(l+0.05)>contrastDark?'#ffffff':'#26352b';
+    return 1.05/(l+0.05)>contrastDark?'#ffffff':'#000000';
   }
   const api={THIRD_STOPS,FIFTH_STOPS,thirdColor,thirdLch,thirdLab,fifthColor,fifthLab,labToRgb,textColor};
   if(typeof module!=='undefined'&&module.exports) module.exports=api;
