@@ -107,8 +107,10 @@
       label.append(node('tspan', { x: 0 }, fmt(s.third)), node('tspan', { x: 0, dy: 14, 'font-size': 12 }, `(${signed(s.third - 386)})`));
       svg.append(label);
       // Fifth labels sit just outside the centre disc as in the source (baselines at r = 70 and 81).
+      // A 0.1 stroke in the text colour thickens the strokes to the source's ink (216 labels, 18 figures).
       const f = xy(72, mid);
-      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'data-span': s.span, 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
+      const fInk = textColor(fifthColor(s.fifth));
+      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'data-span': s.span, 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: fInk, stroke: fInk, 'stroke-width': .1, 'paint-order': 'stroke' });
       fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 11 }, `(${signed(s.fifth - 702)})`));
       svg.append(fLabel);
       svg.append(noteName(rootLabel(s.root), NAME_STYLE.root, s.start));
