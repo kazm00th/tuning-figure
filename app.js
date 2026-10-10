@@ -46,9 +46,10 @@
     svg.append(node('title', { id: 'svg-title' }, `Temperament Circle Diagram — ${title}`));
     svg.append(node('desc', { id: 'svg-desc' }, 'Dを下に置く五度圏。扇形は五度、楕円は長三度の音程を表します。詳細な値はページ下の表にあります。'));
     svg.append(node('rect', { width: 850, height: 850, fill: background }));
+    // Line greys, widths and the 5-unit dash period were measured from the source figures (pages 32, 496, 691, 2295).
     for (const s of model.sectors) {
       const p = xy(R, s.start), q = xy(R, s.end);
-      svg.append(node('path', { d: `M ${center} ${center} L ${p.join(' ')} A ${R} ${R} 0 0 0 ${q.join(' ')} Z`, fill: fifthColor(s.fifth), stroke: '#9ba99c', 'stroke-width': .7 }));
+      svg.append(node('path', { d: `M ${center} ${center} L ${p.join(' ')} A ${R} ${R} 0 0 0 ${q.join(' ')} Z`, fill: fifthColor(s.fifth), stroke: '#808080', 'stroke-width': 1 }));
     }
     for (let cent = 380; cent <= 422; cent++) {
       svg.append(node('circle', { cx: center, cy: center, r: innerRadius(cent, R), fill: 'none', stroke: thirdColor(cent), 'stroke-width': cent === 400 ? 1.8 : .6, opacity: cent > 408 ? .22 : .5 }));
@@ -56,7 +57,7 @@
     svg.append(node('circle', { cx: center, cy: center, r: innerRadius(PURE_THIRD, R), fill: 'none', stroke: thirdColor(PURE_THIRD), 'stroke-width': 1.8, opacity: .5 }));
     for (let i = 0; i < 12; i++) {
       const p = xy(R + 13, 90 - i * 30);
-      svg.append(node('line', { x1: center, y1: center, x2: p[0], y2: p[1], stroke: '#9aab9c', 'stroke-width': .7, 'stroke-dasharray': '2 4', opacity: .7 }));
+      svg.append(node('line', { x1: center, y1: center, x2: p[0], y2: p[1], stroke: '#888888', 'stroke-width': 1, 'stroke-dasharray': '2 3' }));
     }
     for (const s of model.sectors) {
       const mid = (s.start + s.end) / 2;
