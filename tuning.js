@@ -64,7 +64,13 @@
     });
     return { pitches: [...pitches], sectors };
   }
-  const api = { NAMES, SHORT, ORDER, PRESETS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel };
+  // Scale (≤ 1) that fits straight label lines between the sector sides. Each line is perpendicular
+  // to the sector's middle radius; its narrowest point is the glyph top at radius `top`.
+  function labelFitScale(lines, span, pad = 1.5) {
+    const half = Math.tan(span * Math.PI / 360);
+    return Math.min(1, ...lines.map(l => (2 * l.top * half - 2 * pad) / l.width));
+  }
+  const api = { NAMES, SHORT, ORDER, PRESETS, PURE_THIRD, DEG_PER_CENT, innerRadius, parseCents, ellipseGeometry, buildModel, labelFitScale };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else host.Tuning = api;
 })(globalThis);

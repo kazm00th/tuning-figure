@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const { NAMES, SHORT, PURE_THIRD, PRESETS, parseCents, buildModel, innerRadius, ellipseGeometry } = Tuning;
+  const { NAMES, SHORT, PURE_THIRD, PRESETS, parseCents, buildModel, innerRadius, ellipseGeometry, labelFitScale } = Tuning;
   const { thirdColor, fifthColor, textColor } = TuningPalette;
   const NS = 'http://www.w3.org/2000/svg';
   // Modal RGB in an unmarked background patch of each sampled source image.
@@ -41,6 +41,13 @@
     if (text !== undefined) el.textContent = text;
     return el;
   }
+  const inkContext = document.createElement('canvas').getContext('2d');
+  // Painted extent of centred label text: half width from the anchor and height above the baseline.
+  function inkExtent(text, size) {
+    inkContext.font = `${size}px ${LABEL_FONT}`; inkContext.textAlign = 'center';
+    const m = inkContext.measureText(text);
+    return { half: Math.max(m.actualBoundingBoxLeft, m.actualBoundingBoxRight), ascent: m.actualBoundingBoxAscent };
+  }
   function render(model, title, background = FIGURE_BACKGROUND) {
     const R = 315, center = 425;
     const xy = (r, a) => [center + r * Math.cos(a * Math.PI / 180), center + r * Math.sin(a * Math.PI / 180)];
@@ -80,7 +87,7 @@
       svg.append(label);
       // Fifth labels sit just outside the centre disc as in the source (baselines at r = 70 and 81).
       const f = xy(72, mid);
-      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
+      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'data-span': s.span, 'text-anchor': 'middle', 'font-family': LABEL_FONT, 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
       fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 11 }, `(${signed(s.fifth - 702)})`));
       svg.append(fLabel);
       const root = xy(R + 35, s.start);
@@ -93,6 +100,16 @@
     svg.append(node('text', { x: center, y: center - 9, 'text-anchor': 'middle', 'font-size': 17, fill: '#624322', 'font-weight': 600 }, 'C = 0'));
     svg.append(node('text', { x: center, y: center + 14, 'text-anchor': 'middle', 'font-size': 11, fill: '#7b5832' }, 'cent'));
     document.getElementById('figure').replaceChildren(svg);
+    // Narrow fifths with decimals would cross the sector sides: shrink those labels to fit, keeping
+    // their baselines (r = 70, 81). Fit uses the painted glyph extents, not the taller em box.
+    for (const t of svg.querySelectorAll('text[data-label="fifth"]')) {
+      const size = 11, lines = [...t.children].map((line, i) => {
+        const ink = inkExtent(line.textContent, size);
+        return { width: 2 * ink.half, top: [70, 81][i] - ink.ascent };
+      });
+      const scale = labelFitScale(lines, Number(t.getAttribute('data-span')));
+      if (scale < 1) t.setAttribute('font-size', size * scale);
+    }
     const tbody = document.getElementById('intervals');
     tbody.replaceChildren(...model.sectors.map(s => {
       const tr = document.createElement('tr');

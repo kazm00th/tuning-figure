@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildModel, ellipseGeometry, parseCents, PRESETS } = require('../tuning.js');
+const { buildModel, ellipseGeometry, parseCents, labelFitScale, PRESETS } = require('../tuning.js');
 const equal = Array.from({ length: 12 }, (_, i) => i * 100);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-9, `${actual} != ${expected}`);
 
@@ -89,4 +89,19 @@ test('Base of Bach preset has one wide fifth and pure C and G thirds', () => {
   near(m.sectors.reduce((sum, s) => sum + s.span, 0), 360);
   for (const s of m.sectors) near(s.fifth, [0,7,2,9,4].includes(s.root) ? 696.5 : s.root === 8 ? 705.5 : 702);
   assert.deepEqual(m.sectors.filter(s => Math.abs(s.third - 386) < 1e-9).map(s => s.root).sort((a,b) => a-b), [0,7]);
+});
+
+test('fifth labels keep their size when they fit inside the sector', () => {
+  // 30-degree sector, glyph top at r = 61.2: about 29.8 units are free after padding.
+  assert.equal(labelFitScale([{ width: 18, top: 61.2 }, { width: 16, top: 72.2 }], 30), 1);
+});
+
+test('fifth labels shrink just enough to fit the narrowest line between the sector sides', () => {
+  const span = 30 + (679.9 - 700) * 30 / 700 * 10, pad = 1.5;
+  const lines = [{ width: 27.8, top: 61.2 }, { width: 30.5, top: 72.2 }];
+  const scale = labelFitScale(lines, span, pad);
+  const free = l => 2 * l.top * Math.tan(span * Math.PI / 360) - 2 * pad;
+  assert.ok(scale < 1);
+  for (const l of lines) assert.ok(l.width * scale <= free(l) + 1e-9);
+  near(Math.max(...lines.map(l => l.width * scale - free(l))), 0);
 });
