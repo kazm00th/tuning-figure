@@ -51,8 +51,11 @@
       const p = xy(R, s.start), q = xy(R, s.end);
       svg.append(node('path', { d: `M ${center} ${center} L ${p.join(' ')} A ${R} ${R} 0 0 0 ${q.join(' ')} Z`, fill: fifthColor(s.fifth), stroke: '#808080', 'stroke-width': 1 }));
     }
-    for (let cent = 380; cent <= 422; cent++) {
-      svg.append(node('circle', { cx: center, cy: center, r: innerRadius(cent, R), fill: 'none', stroke: thirdColor(cent), 'stroke-width': cent === 400 ? 1.8 : .6, opacity: cent > 408 ? .22 : .5 }));
+    // 1-cent rings in the third colours up to 428 cent; 400 and 408 (Pythagorean) are emphasised.
+    // Range, widths and opacities were matched to radial profiles of the source figures (pages 215, 691, 2284).
+    for (let cent = 380; cent <= 428; cent++) {
+      const mark = cent === 400 || cent === 408;
+      svg.append(node('circle', { cx: center, cy: center, r: innerRadius(cent, R), fill: 'none', stroke: thirdColor(cent), 'stroke-width': mark ? 1.8 : cent < 400 ? .8 : .6, opacity: mark ? .6 : cent > 408 ? .45 : .9 }));
     }
     svg.append(node('circle', { cx: center, cy: center, r: innerRadius(PURE_THIRD, R), fill: 'none', stroke: thirdColor(PURE_THIRD), 'stroke-width': 1.8, opacity: .5 }));
     for (let i = 0; i < 12; i++) {
@@ -72,9 +75,10 @@
       const label = node('text', { x: 0, y: -2, transform: `translate(${labelPoint.join(' ')}) rotate(${mid - 90})`, 'data-label': 'third', 'text-anchor': 'middle', 'font-size': 14, fill: textColor(thirdColor(s.third)) });
       label.append(node('tspan', { x: 0 }, fmt(s.third)), node('tspan', { x: 0, dy: 17, 'font-size': 12 }, `(${signed(s.third - 386)})`));
       svg.append(label);
-      const f = xy(82, mid);
-      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'text-anchor': 'middle', 'font-size': 12, fill: textColor(fifthColor(s.fifth)) });
-      fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 14, 'font-size': 10 }, `(${signed(s.fifth - 702)})`));
+      // Fifth labels sit just outside the centre disc as in the source (baselines at r = 70 and 81).
+      const f = xy(72, mid);
+      const fLabel = node('text', { x: 0, y: -2, transform: `translate(${f.join(' ')}) rotate(${mid - 90})`, 'data-label': 'fifth', 'text-anchor': 'middle', 'font-size': 11, fill: textColor(fifthColor(s.fifth)) });
+      fLabel.append(node('tspan', { x: 0 }, fmt(s.fifth)), node('tspan', { x: 0, dy: 11 }, `(${signed(s.fifth - 702)})`));
       svg.append(fLabel);
       const root = xy(R + 35, s.start);
       svg.append(node('text', { x: root[0], y: root[1] + 4, 'text-anchor': 'middle', 'font-size': 23, 'font-weight': 600, fill: '#334d40' }, SHORT[s.root]));
@@ -82,7 +86,7 @@
       svg.append(node('text', { x: thirdName[0], y: thirdName[1] + 4, 'text-anchor': 'middle', 'font-size': 13, fill: '#73816d' }, SHORT[s.middle].toLowerCase()));
     }
     svg.append(node('circle', { cx: center, cy: center, r: R, fill: 'none', stroke: '#778975', 'stroke-width': 1 }));
-    svg.append(node('circle', { cx: center, cy: center, r: 67, fill: '#f2bd78', stroke: '#d59b52', 'stroke-width': 1 }));
+    svg.append(node('circle', { cx: center, cy: center, r: 53, fill: '#f7b779', stroke: '#7a6450', 'stroke-width': 1 }));
     svg.append(node('text', { x: center, y: center - 9, 'text-anchor': 'middle', 'font-size': 17, fill: '#624322', 'font-weight': 600 }, 'C = 0'));
     svg.append(node('text', { x: center, y: center + 14, 'text-anchor': 'middle', 'font-size': 11, fill: '#7b5832' }, 'cent'));
     document.getElementById('figure').replaceChildren(svg);
